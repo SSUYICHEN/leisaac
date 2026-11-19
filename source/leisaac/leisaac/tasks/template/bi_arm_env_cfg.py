@@ -18,6 +18,7 @@ from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors import TiledCameraCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.datasets.episode_data import EpisodeData
+from leisaac.utils.sim_cfg_utils import apply_default_sim_settings
 from leisaac.assets.robots.lerobot import SO101_FOLLOWER_CFG
 from leisaac.devices.action_process import init_action_cfg, preprocess_device_action
 from leisaac.enhance.datasets.lerobot_dataset_handler import LeRobotDatasetCfg
@@ -199,9 +200,7 @@ class BiArmTaskEnvCfg(ManagerBasedRLEnvCfg):
         self.viewer.eye = (2.5, -1.0, 1.3)
         self.viewer.lookat = (3.6, -0.4, 1.0)
 
-        self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.friction_correlation_distance = 0.00625
-        self.sim.render.enable_translucency = True
+        apply_default_sim_settings(self)
 
         self.scene.left_arm.init_state.pos = (3.4, -0.65, 0.89)
         self.scene.right_arm.init_state.pos = (3.8, -0.65, 0.89)

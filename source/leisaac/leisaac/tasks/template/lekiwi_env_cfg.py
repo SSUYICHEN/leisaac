@@ -18,6 +18,7 @@ from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors import FrameTransformerCfg, OffsetCfg, TiledCameraCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.datasets.episode_data import EpisodeData
+from leisaac.utils.sim_cfg_utils import apply_default_sim_settings
 from leisaac.assets.robots.lerobot import LEKIWI_CFG
 from leisaac.devices.action_process import init_action_cfg, preprocess_device_action
 from leisaac.enhance.datasets.lerobot_dataset_handler import LeRobotDatasetCfg
@@ -199,9 +200,7 @@ class LeKiwiTaskEnvCfg(ManagerBasedRLEnvCfg):
         self.viewer.eye = (1.4, -0.9, 1.2)
         self.viewer.lookat = (2.0, -0.5, 1.0)
 
-        self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.friction_correlation_distance = 0.00625
-        self.sim.render.enable_translucency = True
+        apply_default_sim_settings(self)
 
         self.scene.ee_frame.visualizer_cfg.markers["frame"].scale = (0.05, 0.05, 0.05)
 
