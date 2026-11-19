@@ -31,13 +31,13 @@ def object_in_container(
     done = torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
 
     container: RigidObject = env.scene[container_cfg.name]
-    container_x = container.data.root_pos_w[:, 0] - env.scene.env_origins[:, 0]
-    container_y = container.data.root_pos_w[:, 1] - env.scene.env_origins[:, 1]
+    container_x = container.data.root_pos_w.torch[:, 0] - env.scene.env_origins[:, 0]
+    container_y = container.data.root_pos_w.torch[:, 1] - env.scene.env_origins[:, 1]
 
     object: RigidObject = env.scene[object_cfg.name]
-    object_x = object.data.root_pos_w[:, 0] - env.scene.env_origins[:, 0]
-    object_y = object.data.root_pos_w[:, 1] - env.scene.env_origins[:, 1]
-    object_z = object.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2]
+    object_x = object.data.root_pos_w.torch[:, 0] - env.scene.env_origins[:, 0]
+    object_y = object.data.root_pos_w.torch[:, 1] - env.scene.env_origins[:, 1]
+    object_z = object.data.root_pos_w.torch[:, 2] - env.scene.env_origins[:, 2]
 
     done = torch.logical_and(done, object_x < container_x + x_range[1])
     done = torch.logical_and(done, object_x > container_x + x_range[0])

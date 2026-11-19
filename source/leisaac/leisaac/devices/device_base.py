@@ -203,10 +203,10 @@ class Device(DeviceBase):
         delta_rotvec_f = math_utils.axis_angle_from_quat(delta_quat_f)
 
         frame_pos, frame_quat = (
-            self.robot_asset.data.root_pos_w,
-            self.robot_asset.data.body_quat_w[:, self.target_frame_idx],
+            self.robot_asset.data.root_pos_w.torch,
+            self.robot_asset.data.body_quat_w.torch[:, self.target_frame_idx],
         )  # don't consider frame pos here
-        root_pos, root_quat = self.robot_asset.data.root_pos_w, self.robot_asset.data.root_quat_w
+        root_pos, root_quat = self.robot_asset.data.root_pos_w.torch, self.robot_asset.data.root_quat_w.torch
         _, frame2root = math_utils.subtract_frame_transforms(root_pos, root_quat, frame_pos, frame_quat)
         frame2root_quat = math_utils.quat_unique(frame2root)
 

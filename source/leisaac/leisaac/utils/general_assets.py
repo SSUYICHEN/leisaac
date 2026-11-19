@@ -54,9 +54,10 @@ def get_prim_pos_rot(prim):
     matrix = xformable.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
     if matrix.Orthonormalize(issueWarning=True):
         rot = matrix.ExtractRotationQuat()
-        rot_list = [rot.GetReal(), rot.GetImaginary()[0], rot.GetImaginary()[1], rot.GetImaginary()[2]]
+        # Isaac Lab 3.x uses (x, y, z, w) for all quaternion configs (e.g. InitialStateCfg.rot).
+        rot_list = [rot.GetImaginary()[0], rot.GetImaginary()[1], rot.GetImaginary()[2], rot.GetReal()]
     else:
-        rot_list = [1, 0, 0, 0]
+        rot_list = [0, 0, 0, 1]
     pos = matrix.ExtractTranslation()
     pos_list = list(pos)
 
@@ -103,11 +104,10 @@ def get_all_joints_without_fixed(articulation_prim):
     return [joint for joint in joints if not is_fixed_joint(joint)]
 
 
-import isaacsim.core.utils.prims as prim_utils
 from isaaclab.assets.articulation import ArticulationCfg
 from isaaclab.assets.rigid_object import RigidObjectCfg
 from isaaclab.sim.spawners.spawner_cfg import RigidObjectSpawnerCfg
-from isaaclab.sim.utils import clone
+from isaaclab.sim.utils import clone, get_current_stage
 
 
 def match_specific_name(prim_path, specific_name_list, exlude_name_list):
@@ -123,7 +123,8 @@ def match_specific_name(prim_path, specific_name_list, exlude_name_list):
 
 @clone
 def spawn_from_prim_path(prim_path, spawn, translation, orientation):
-    return prim_utils.get_prim_at_path(prim_path)
+    # Isaac Lab 3.0 deprecates isaacsim.core.utils.prims; use the USD stage API directly.
+    return get_current_stage().GetPrimAtPath(str(prim_path))
 
 
 def parse_usd_and_create_subassets(usd_path, env_cfg, specific_name_list=None, exclude_name_list=None):

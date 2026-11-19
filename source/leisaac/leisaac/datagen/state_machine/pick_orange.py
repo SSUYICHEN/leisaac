@@ -92,7 +92,7 @@ class PickOrangeStateMachine(StateMachineBase):
         )
         env.sim.step(render=False)
         env.scene.update(dt=env.physics_dt)
-        self._rest_ee_pos_world = robot.data.body_pos_w[:, -1, :].clone()
+        self._rest_ee_pos_world = robot.data.body_pos_w.torch[:, -1, :].clone()
 
     def check_success(self, env) -> bool:
         """Return True if all oranges are on the plate and the arm is at rest."""
@@ -125,7 +125,7 @@ class PickOrangeStateMachine(StateMachineBase):
         if self._orange_now == self._num_oranges and self._step_count >= 680 and self._rest_joint_pos is not None:
             robot = env.scene["robot"]
             if self._step_count == 680:
-                self._home_start_pos = robot.data.joint_pos.clone()
+                self._home_start_pos = robot.data.joint_pos.torch.clone()
             if self._home_start_pos is not None:
                 alpha = min((self._step_count - 680) / 299.0, 1.0)
                 blended = self._home_start_pos + (self._rest_joint_pos - self._home_start_pos) * alpha
@@ -140,10 +140,10 @@ class PickOrangeStateMachine(StateMachineBase):
         num_envs = env.num_envs
         step = self._step_count
 
-        orange_pos_w = env.scene[f"Orange00{self._orange_now}"].data.root_pos_w.clone()
-        plate_pos_w = env.scene["Plate"].data.root_pos_w.clone()
-        robot_base_pos_w = robot.data.root_pos_w.clone()
-        robot_base_quat_w = robot.data.root_quat_w.clone()
+        orange_pos_w = env.scene[f"Orange00{self._orange_now}"].data.root_pos_w.torch.clone()
+        plate_pos_w = env.scene["Plate"].data.root_pos_w.torch.clone()
+        robot_base_pos_w = robot.data.root_pos_w.torch.clone()
+        robot_base_quat_w = robot.data.root_quat_w.torch.clone()
 
         target_quat_w = quat_from_euler_xyz(
             torch.tensor(0.0, device=device),
@@ -153,7 +153,7 @@ class PickOrangeStateMachine(StateMachineBase):
         target_quat = quat_mul(quat_inv(robot_base_quat_w), target_quat_w)
 
         if self._orange_now == 1 and step == 0:
-            self._initial_ee_pos = robot.data.body_pos_w[:, -1, :].clone()
+            self._initial_ee_pos = robot.data.body_pos_w.torch[:, -1, :].clone()
 
         if self._orange_now == 1 and step < _APPROACH_STEPS:
             target_pos_w, gripper_cmd = self._phase_approach_hover(orange_pos_w, num_envs, device)

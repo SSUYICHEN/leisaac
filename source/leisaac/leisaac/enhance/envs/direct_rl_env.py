@@ -5,7 +5,6 @@ import torch
 from isaaclab.envs.common import VecEnvObs, VecEnvStepReturn
 from isaaclab.envs.direct_rl_env import DirectRLEnv
 from isaaclab.managers import RecorderManager
-from isaacsim.core.simulation_manager import SimulationManager
 
 from .direct_rl_env_cfg import RecorderEnhanceDirectRLEnvCfg
 
@@ -144,8 +143,10 @@ class RecorderEnhanceDirectRLEnv(DirectRLEnv):
             self.recorder_manager.record_post_reset(indices)
 
         if self.cfg.wait_for_textures and self.sim.has_rtx_sensors():
-            while SimulationManager.assets_loading():
-                self.sim.render()
+            # Isaac Lab 3.x: SimulationManager is accessed through the physics manager of the simulation context.
+            if hasattr(self.sim.physics_manager, "assets_loading"):
+                while self.sim.physics_manager.assets_loading():
+                    self.sim.render()
 
         # return observations
         self.obs_buf = self._get_observations()  # [enhance] store observations in buffer

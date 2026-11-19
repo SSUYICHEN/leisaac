@@ -2,10 +2,43 @@ import isaaclab.utils.math as math_utils
 import torch
 from isaaclab.assets import Articulation
 from isaaclab.envs import ManagerBasedEnv, ManagerBasedRLEnv
-from isaaclab.envs.mdp.observations import image
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.sensors import FrameTransformer
+from isaaclab.utils.images import normalize_rgb
 from leisaac.utils.robot_utils import convert_lekiwi_wheel_action_env2robot
+
+
+def image(
+    env: ManagerBasedEnv,
+    sensor_cfg: SceneEntityCfg = SceneEntityCfg("tiled_camera"),
+    data_type: str = "rgb",
+    convert_perspective_to_orthogonal: bool = False,
+    normalize: bool = True,
+) -> torch.Tensor:
+    """Images of a specific datatype from the camera sensor.
+
+    Compatibility shim: Isaac Lab 3.0 removed ``isaaclab.envs.mdp.observations.image`` in favour of the class-based
+    ``image_rgb`` / ``image_depth`` / ... terms. This function keeps the Isaac Lab 2.x signature and behavior so that
+    existing task configs (``ObsTerm(func=mdp.image, ...)``) keep working.
+
+    Returns:
+        The images produced at the last time-step. Shape is (num_envs, H, W, C).
+    """
+    sensor = env.scene.sensors[sensor_cfg.name]
+    images = sensor.data.output[data_type].torch
+    if data_type == "distance_to_camera" and convert_perspective_to_orthogonal:
+        images = math_utils.orthogonalize_perspective_depth(images, sensor.data.intrinsic_matrices)
+
+    if normalize:
+        if data_type == "rgb":
+            # scale to [0, 1] and subtract the per-image, per-channel mean (same as Isaac Lab 2.x)
+            return normalize_rgb(images[..., :3])
+        if "distance_to" in data_type or "depth" in data_type:
+            images = images.clone()
+            images[images == float("inf")] = 0
+            return images
+    # return a copy so that downstream modifications do not alias the sensor buffer
+    return images.clone()
 
 
 def overlay_image(
@@ -98,9 +131,9 @@ def ee_frame_state(
     Return the state of the end effector frame in the robot coordinate system.
     """
     robot = env.scene[robot_cfg.name]
-    robot_root_pos, robot_root_quat = robot.data.root_pos_w, robot.data.root_quat_w
+    robot_root_pos, robot_root_quat = robot.data.root_pos_w.torch, robot.data.root_quat_w.torch
     ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
-    ee_frame_pos, ee_frame_quat = ee_frame.data.target_pos_w[:, 0, :], ee_frame.data.target_quat_w[:, 0, :]
+    ee_frame_pos, ee_frame_quat = ee_frame.data.target_pos_w.torch[:, 0, :], ee_frame.data.target_quat_w.torch[:, 0, :]
     ee_frame_pos_robot, ee_frame_quat_robot = math_utils.subtract_frame_transforms(
         robot_root_pos, robot_root_quat, ee_frame_pos, ee_frame_quat
     )
@@ -116,7 +149,7 @@ def joint_pos_target(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = SceneEnti
     """
     # extract the used quantities (to enable type-hinting)
     asset: Articulation = env.scene[asset_cfg.name]
-    return asset.data.joint_pos_target[:, asset_cfg.joint_ids]
+    return asset.data.joint_pos_target.torch[:, asset_cfg.joint_ids]
 
 
 def user_based_velocity_action(
@@ -129,12 +162,12 @@ def user_based_velocity_action(
     """
     asset: Articulation = env.scene[asset_cfg.name]
     rotate_joint_name = wheel_joint_names[2]
-    base_theta = asset.data.joint_pos[:, asset.joint_names.index(rotate_joint_name)]
+    base_theta = asset.data.joint_pos.torch[:, asset.joint_names.index(rotate_joint_name)]
     wheel_vel_action = torch.stack(
         [
-            asset.data.joint_vel_target[:, asset.joint_names.index(wheel_joint_names[0])],  # base_x
-            asset.data.joint_vel_target[:, asset.joint_names.index(wheel_joint_names[1])],  # base_y
-            asset.data.joint_vel_target[:, asset.joint_names.index(wheel_joint_names[2])],  # base_theta
+            asset.data.joint_vel_target.torch[:, asset.joint_names.index(wheel_joint_names[0])],  # base_x
+            asset.data.joint_vel_target.torch[:, asset.joint_names.index(wheel_joint_names[1])],  # base_y
+            asset.data.joint_vel_target.torch[:, asset.joint_names.index(wheel_joint_names[2])],  # base_theta
         ],
         dim=-1,
     )
@@ -151,12 +184,12 @@ def user_based_velocity_state(
     """
     asset: Articulation = env.scene[asset_cfg.name]
     rotate_joint_name = wheel_joint_names[2]
-    base_theta = asset.data.joint_pos[:, asset.joint_names.index(rotate_joint_name)]
+    base_theta = asset.data.joint_pos.torch[:, asset.joint_names.index(rotate_joint_name)]
     wheel_vel_action = torch.stack(
         [
-            asset.data.joint_vel[:, asset.joint_names.index(wheel_joint_names[0])],  # base_x
-            asset.data.joint_vel[:, asset.joint_names.index(wheel_joint_names[1])],  # base_y
-            asset.data.joint_vel[:, asset.joint_names.index(wheel_joint_names[2])],  # base_theta
+            asset.data.joint_vel.torch[:, asset.joint_names.index(wheel_joint_names[0])],  # base_x
+            asset.data.joint_vel.torch[:, asset.joint_names.index(wheel_joint_names[1])],  # base_y
+            asset.data.joint_vel.torch[:, asset.joint_names.index(wheel_joint_names[2])],  # base_theta
         ],
         dim=-1,
     )
