@@ -70,6 +70,9 @@ class LeRobotRecorderManager(RecorderManager):
 
         if env_ids is None:
             env_ids = list(range(self._env.num_envs))
+        if isinstance(env_ids, slice):
+            # Isaac Lab 3.x passes slice(None) from env.reset(); convert it to a list of indices
+            env_ids = list(range(self._env.num_envs)[env_ids])
         if isinstance(env_ids, torch.Tensor):
             env_ids = env_ids.tolist()
 
@@ -102,6 +105,9 @@ class LeRobotRecorderManager(RecorderManager):
 
         if env_ids is None:
             env_ids = list(range(self._env.num_envs))
+        if isinstance(env_ids, slice):
+            # Isaac Lab 3.x passes slice(None) from env.reset(); convert it to a list of indices
+            env_ids = list(range(self._env.num_envs)[env_ids])
         if isinstance(env_ids, torch.Tensor):
             env_ids = env_ids.tolist()
 
